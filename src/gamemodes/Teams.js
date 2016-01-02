@@ -1,159 +1,88 @@
-var Mode = require('./Mode');
-
-function Teams() {
-    Mode.apply(this, Array.prototype.slice.call(arguments));
-
-    this.ID = 1;
-    this.name = "Teams";
-    this.decayMod = 1.5;
-    this.packetLB = 50;
-    this.haveTeams = true;
-    this.colorFuzziness = 32;
-
-    // Special
-    this.teamAmount = 3; // Amount of teams. Having more than 3 teams will cause the leaderboard to work incorrectly (client issue).
-    this.colors = [
-        {'r': 223, 'g': 0, 'b': 0},
-        {'r': 0, 'g': 223, 'b': 0},
-        {'r': 0, 'g': 0, 'b': 223},
-    ]; // Make sure you add extra colors here if you wish to increase the team amount [Default colors are: Red, Green, Blue]
-    this.nodes = []; // Teams
+function Teams()
+{
+  Mode.apply(this, Array.prototype.slice.call(arguments)), this.ID = 1, this.name = "Teams", this.decayMod = 1.5, this.packetLB = 50, this.haveTeams = !0, this.colorFuzziness = 32, this.teamAmount = 3, this.colors = [
+  {
+    r: 223,
+    g: 0,
+    b: 0
+  },
+  {
+    r: 0,
+    g: 223,
+    b: 0
+  },
+  {
+    r: 0,
+    g: 0,
+    b: 223
+  }], this.nodes = []
 }
-
-module.exports = Teams;
-Teams.prototype = new Mode();
-
-//Gamemode Specific Functions
-
-Teams.prototype.fuzzColorComponent = function(component) {
-    component += Math.random() * this.colorFuzziness >> 0;
-    return component;
-};
-
-Teams.prototype.getTeamColor = function(team) {
-    var color = this.colors[team];
-    return {
-        r: this.fuzzColorComponent(color.r),
-        b: this.fuzzColorComponent(color.b),
-        g: this.fuzzColorComponent(color.g)
-    };
-};
-
-// Override
-
-Teams.prototype.onPlayerSpawn = function(gameServer,player) {
-    // Random color based on team
-    player.color = this.getTeamColor(player.team);
-    // Spawn player
-    gameServer.spawnPlayer(player);
-};
-
-Teams.prototype.onServerInit = function(gameServer) {
-    // Set up teams
-    for (var i = 0; i < this.teamAmount; i++) {
-        this.nodes[i] = [];
+var Mode = require("./Mode");
+module.exports = Teams, Teams.prototype = new Mode, Teams.prototype.fuzzColorComponent = function (o)
+{
+  return o += Math.random() * this.colorFuzziness >> 0
+}, Teams.prototype.getTeamColor = function (o)
+{
+  var e = this.colors[o];
+  return {
+    r: this.fuzzColorComponent(e.r),
+    b: this.fuzzColorComponent(e.b),
+    g: this.fuzzColorComponent(e.g)
+  }
+}, Teams.prototype.onPlayerSpawn = function (o, e)
+{
+  e.color = this.getTeamColor(e.team), o.spawnPlayer(e)
+}, Teams.prototype.onServerInit = function (o)
+{
+  for (var e = 0; e < this.teamAmount; e++) this.nodes[e] = [];
+  for (var e = 0; e < o.clients.length; e++)
+  {
+    var t = o.clients[e].playerTracker;
+    this.onPlayerInit(t), t.color = this.getTeamColor(t.team);
+    for (var s = 0; s < t.cells.length; s++)
+    {
+      var n = t.cells[s];
+      n.setColor(t.color), this.nodes[t.team].push(n)
     }
-
-    // migrate current players to team mode
-    for (var i = 0; i < gameServer.clients.length; i++) {
-        var client = gameServer.clients[i].playerTracker;
-        this.onPlayerInit(client);
-        client.color = this.getTeamColor(client.team);
-        for (var j = 0; j < client.cells.length; j++) {
-            var cell = client.cells[j];
-            cell.setColor(client.color);
-            this.nodes[client.team].push(cell);
-        }
+  }
+}, Teams.prototype.onPlayerInit = function (o)
+{
+  o.team = Math.floor(Math.random() * this.teamAmount)
+}, Teams.prototype.onCellAdd = function (o)
+{
+  this.nodes[o.owner.getTeam()].push(o)
+}, Teams.prototype.onCellRemove = function (o)
+{
+  var e = this.nodes[o.owner.getTeam()].indexOf(o); - 1 != e && this.nodes[o.owner.getTeam()].splice(e, 1)
+}, Teams.prototype.onCellMove = function (o, e, t)
+{
+  for (var s = t.owner.getTeam(), n = t.getSize(), i = 0; i < t.owner.visibleNodes.length; i++)
+  {
+    var r = t.owner.visibleNodes[i];
+    if (0 == r.getType() && t.owner != r.owner && r.owner.getTeam() == s)
+    {
+      var a = r.getSize() + n;
+      if (!t.simpleCollide(o, e, r, a)) continue;
+      if (dist = t.getDist(t.position.x, t.position.y, r.position.x, r.position.y), dist < a)
+      {
+        var l = r.position.y - e,
+          m = r.position.x - o,
+          p = Math.atan2(m, l),
+          h = a - dist;
+        r.position.x = r.position.x + h * Math.sin(p) >> 0, r.position.y = r.position.y + h * Math.cos(p) >> 0
+      }
     }
-};
-
-Teams.prototype.onPlayerInit = function(player) {
-    // Get random team
-    player.team = Math.floor(Math.random() * this.teamAmount);
-};
-
-Teams.prototype.onCellAdd = function(cell) {
-    // Add to team list
-    this.nodes[cell.owner.getTeam()].push(cell);
-};
-
-Teams.prototype.onCellRemove = function(cell) {
-    // Remove from team list
-    var index = this.nodes[cell.owner.getTeam()].indexOf(cell);
-    if (index != -1) {
-        this.nodes[cell.owner.getTeam()].splice(index, 1);
+  }
+}, Teams.prototype.updateLB = function (o)
+{
+  for (var e = 0, t = [], s = 0; s < this.teamAmount; s++)
+  {
+    t[s] = 0;
+    for (var n = 0; n < this.nodes[s].length; n++)
+    {
+      var i = this.nodes[s][n];
+      i && (t[s] += i.mass, e += i.mass)
     }
+  }
+  for (var s = 0; s < this.teamAmount; s++) 0 >= e || (o.leaderboard[s] = t[s] / e)
 };
-
-Teams.prototype.onCellMove = function(x1,y1,cell) {
-    var team = cell.owner.getTeam();
-    var r = cell.getSize();
-
-    // Find team
-    for (var i = 0; i < cell.owner.visibleNodes.length;i++) {
-        // Only collide with player cells
-        var check = cell.owner.visibleNodes[i];
-
-        if ((check.getType() != 0) || (cell.owner == check.owner)){
-            continue;
-        }
-
-        // Collision with teammates
-        if (check.owner.getTeam() == team) {
-            // Check if in collision range
-            var collisionDist = check.getSize() + r; // Minimum distance between the 2 cells
-            if (!cell.simpleCollide(x1,y1,check, collisionDist)) {
-                // Skip
-                continue;
-            }
-
-            // First collision check passed... now more precise checking
-            dist = cell.getDist(cell.position.x,cell.position.y,check.position.x,check.position.y);
-
-            // Calculations
-            if (dist < collisionDist) { // Collided
-                // The moving cell pushes the colliding cell
-                var newDeltaY = check.position.y - y1;
-                var newDeltaX = check.position.x - x1;
-                var newAngle = Math.atan2(newDeltaX,newDeltaY);
-
-                var move = collisionDist - dist;
-
-                check.position.x = check.position.x + ( move * Math.sin(newAngle) ) >> 0;
-                check.position.y = check.position.y + ( move * Math.cos(newAngle) ) >> 0;
-            }
-        }
-    }
-};
-
-Teams.prototype.updateLB = function(gameServer) {
-    var total = 0;
-    var teamMass = [];
-    // Get mass
-    for (var i = 0; i < this.teamAmount; i++) {
-        // Set starting mass
-        teamMass[i] = 0;
-
-        // Loop through cells
-        for (var j = 0; j < this.nodes[i].length;j++) {
-            var cell = this.nodes[i][j];
-
-            if (!cell) {
-                continue;
-            }
-
-            teamMass[i] += cell.mass;
-            total += cell.mass;
-        }
-    }
-    // Calc percentage
-    for (var i = 0; i < this.teamAmount; i++) {
-        // No players
-        if (total <= 0) {
-            continue;
-        }
-
-        gameServer.leaderboard[i] = teamMass[i]/total;
-    }
-};
-

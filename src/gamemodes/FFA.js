@@ -1,102 +1,45 @@
-var Mode = require('./Mode');
-
-function FFA() {
-    Mode.apply(this, Array.prototype.slice.call(arguments));
-
-    this.ID = 0;
-    this.name = "Free For All";
-    this.specByLeaderboard = true;
+function FFA()
+{
+  Mode.apply(this, Array.prototype.slice.call(arguments)), this.ID = 0, this.name = "Free For All", this.specByLeaderboard = !0
 }
-
-module.exports = FFA;
-FFA.prototype = new Mode();
-
-// Gamemode Specific Functions
-
-FFA.prototype.leaderboardAddSort = function(player,leaderboard) {
-    // Adds the player and sorts the leaderboard
-    var len = leaderboard.length - 1;
-    var loop = true;
-    while ((len >= 0) && (loop)) {
-        // Start from the bottom of the leaderboard
-        if (player.getScore(false) <= leaderboard[len].getScore(false)) {
-            leaderboard.splice(len + 1, 0, player);
-            loop = false; // End the loop if a spot is found
-        }
-        len--;
+var Mode = require("./Mode");
+module.exports = FFA, FFA.prototype = new Mode, FFA.prototype.leaderboardAddSort = function (e, o)
+{
+  for (var r = o.length - 1, t = !0; r >= 0 && t;) e.getScore(!1) <= o[r].getScore(!1) && (o.splice(r + 1, 0, e), t = !1), r--;
+  t && o.splice(0, 0, e)
+}, FFA.prototype.onPlayerSpawn = function (e, o)
+{
+  o.color = e.getRandomColor();
+  var r, t;
+  if (e.nodesEjected.length > 0)
+  {
+    var a = Math.floor(100 * Math.random()) + 1;
+    if (a <= e.config.ejectSpawnPlayer)
+    {
+      var a = Math.floor(Math.random() * e.nodesEjected.length),
+        n = e.nodesEjected[a];
+      e.removeNode(n), r = {
+        x: n.position.x,
+        y: n.position.y
+      }, t = n.mass;
+      var l = n.getColor();
+      o.setColor(
+      {
+        r: l.r,
+        g: l.g,
+        b: l.b
+      })
     }
-    if (loop) {
-        // Add to top of the list because no spots were found
-        leaderboard.splice(0, 0,player);
+  }
+  e.spawnPlayer(o, r, t)
+}, FFA.prototype.updateLB = function (e)
+{
+  for (var o = e.leaderboard, r = 0; r < e.clients.length; r++)
+    if ("undefined" != typeof e.clients[r])
+    {
+      var t = e.clients[r].playerTracker,
+        a = t.getScore(!0);
+      t.cells.length <= 0 || (0 != o.length ? o.length < 10 ? this.leaderboardAddSort(t, o) : a > o[9].getScore(!1) && (o.pop(), this.leaderboardAddSort(t, o)) : o.push(t))
     }
+  this.rankOne = o[0]
 };
-
-// Override
-
-FFA.prototype.onPlayerSpawn = function(gameServer,player) {
-    // Random color
-    player.color = gameServer.getRandomColor();
-    
-    // Set up variables
-    var pos, startMass;
-    
-    // Check if there are ejected mass in the world.
-    if (gameServer.nodesEjected.length > 0) {
-        var index = Math.floor(Math.random() * 100) + 1;
-        if (index <= gameServer.config.ejectSpawnPlayer) {
-            // Get ejected cell
-            var index = Math.floor(Math.random() * gameServer.nodesEjected.length);
-            var e = gameServer.nodesEjected[index];
-
-            // Remove ejected mass
-            gameServer.removeNode(e);
-
-            // Inherit
-            pos = {x: e.position.x, y: e.position.y};
-            startMass = e.mass;
-
-            var color = e.getColor();
-            player.setColor({
-                'r': color.r,
-                'g': color.g,
-                'b': color.b
-            });
-        }
-    }
-    
-    // Spawn player
-    gameServer.spawnPlayer(player,pos,startMass);
-}
-
-FFA.prototype.updateLB = function(gameServer) {
-    var lb = gameServer.leaderboard;
-    // Loop through all clients
-    for (var i = 0; i < gameServer.clients.length; i++) {
-        if (typeof gameServer.clients[i] == "undefined") {
-            continue;
-        }
-
-        var player = gameServer.clients[i].playerTracker;
-        var playerScore = player.getScore(true);
-        if (player.cells.length <= 0) {
-            continue;
-        }
-
-        if (lb.length == 0) {
-            // Initial player
-            lb.push(player);
-            continue;
-        } else if (lb.length < 10) {
-            this.leaderboardAddSort(player,lb);
-        } else {
-            // 10 in leaderboard already
-            if (playerScore > lb[9].getScore(false)) {
-                lb.pop();
-                this.leaderboardAddSort(player,lb);
-            }
-        }
-    }
-
-    this.rankOne = lb[0];
-};
-

@@ -1,61 +1,31 @@
-var FFA = require('./FFA'); // Base gamemode
-var Packet = require('../packet');
-
-function Debug() {
-    FFA.apply(this, Array.prototype.slice.call(arguments));
-
-    this.ID = 21;
-    this.name = "Debug Mode";
-    this.specByLeaderboard = false;
+function Debug()
+{
+  FFA.apply(this, Array.prototype.slice.call(arguments)), this.ID = 21, this.name = "Debug Mode", this.specByLeaderboard = !1
 }
-
-module.exports = Debug;
-Debug.prototype = new FFA();
-
-// Gamemode Specific Functions
-
-Debug.prototype.testPath = function(gameServer,player) {
-    var cell = player.cells[0];
-    var check = gameServer.nodesVirus[0];
-
-    var v1 = Math.atan2(cell.position.x - player.mouse.x,cell.position.y - player.mouse.y);
-
-    // Get angle of vector (cell -> virus)
-    var v2 = this.getAngle(cell,check);
-    var dist = this.getDist(cell,check);
-    console.log(v1);
-    console.log(v2);
-
-    var inRange = Math.atan((2 * cell.getSize())/dist); // Opposite/adjacent
-    console.log(inRange);
-    if ((v1 <= (v2 + inRange)) && (v1 >= (v2 - inRange))) {
-        console.log("Collided!");
-    } 
-}
-
-Debug.prototype.getAngle = function(c1,c2) {
-    var deltaY = c1.position.y - c2.position.y;
-    var deltaX = c1.position.x - c2.position.x;
-    return Math.atan2(deltaX,deltaY);
+var FFA = require("./FFA"),
+  Packet = require("../packet");
+module.exports = Debug, Debug.prototype = new FFA, Debug.prototype.testPath = function (o, t)
+{
+  var e = t.cells[0],
+    s = o.nodesVirus[0],
+    i = Math.atan2(e.position.x - t.mouse.x, e.position.y - t.mouse.y),
+    n = this.getAngle(e, s),
+    a = this.getDist(e, s);
+  console.log(i), console.log(n);
+  var r = Math.atan(2 * e.getSize() / a);
+  console.log(r), n + r >= i && i >= n - r && console.log("Collided!")
+}, Debug.prototype.getAngle = function (o, t)
+{
+  var e = o.position.y - t.position.y,
+    s = o.position.x - t.position.x;
+  return Math.atan2(s, e)
+}, Debug.prototype.getDist = function (o, t)
+{
+  var e = t.position.x - o.position.x;
+  e = 0 > e ? -1 * e : e;
+  var s = t.position.y - o.position.y;
+  return s = 0 > s ? -1 * s : s, e + s
+}, Debug.prototype.pressW = function (o, t)
+{
+  console.log("Test:"), this.testPath(o, t), t.socket.sendPacket(new Packet.DrawLine(t.mouse.x, t.mouse.y))
 };
-
-Debug.prototype.getDist = function(cell,check) {
-    // Fastest distance - I have a crappy computer to test with :(
-    var xd = (check.position.x - cell.position.x);
-    xd = xd < 0 ? xd * -1 : xd; // Math.abs is slow
-
-    var yd = (check.position.y - cell.position.y);
-    yd = yd < 0 ? yd * -1 : yd; // Math.abs is slow
-
-    return (xd + yd);
-};
-
-// Override
-
-Debug.prototype.pressW = function(gameServer,player) {
-    // Called when the Q key is pressed
-    console.log("Test:");
-    this.testPath(gameServer,player);
-    player.socket.sendPacket(new Packet.DrawLine(player.mouse.x,player.mouse.y));
-};
-

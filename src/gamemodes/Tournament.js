@@ -1,249 +1,75 @@
-var Mode = require('./Mode');
-
-function Tournament() {
-    Mode.apply(this, Array.prototype.slice.call(arguments));
-
-    this.ID = 10;
-    this.name = "Tournament";
-    this.packetLB = 48;
-
-    // Config (1 tick = 1000 ms)
-    this.prepTime = 5; // Amount of ticks after the server fills up to wait until starting the game
-    this.endTime = 15; // Amount of ticks after someone wins to restart the game
-    this.autoFill = false;
-    this.autoFillPlayers = 1;
-    this.dcTime = 0;
-
-    // Gamemode Specific Variables
-    this.gamePhase = 0; // 0 = Waiting for players, 1 = Prepare to start, 2 = Game in progress, 3 = End
-    this.contenders = [];
-    this.maxContenders = 12;
-
-    this.winner;
-    this.timer;
-    this.timeLimit = 3600; // in seconds
+function Tournament()
+{
+  Mode.apply(this, Array.prototype.slice.call(arguments)), this.ID = 10, this.name = "Tournament", this.packetLB = 48, this.prepTime = 5, this.endTime = 15, this.autoFill = !1, this.autoFillPlayers = 1, this.dcTime = 0, this.gamePhase = 0, this.contenders = [], this.maxContenders = 12, this.winner, this.timer, this.timeLimit = 3600
 }
-
-module.exports = Tournament;
-Tournament.prototype = new Mode();
-
-// Gamemode Specific Functions
-
-Tournament.prototype.startGamePrep = function(gameServer) {
-    this.gamePhase = 1;
-    this.timer = this.prepTime; // 10 seconds
+var Mode = require("./Mode");
+module.exports = Tournament, Tournament.prototype = new Mode, Tournament.prototype.startGamePrep = function (t)
+{
+  this.gamePhase = 1, this.timer = this.prepTime
+}, Tournament.prototype.startGame = function (t)
+{
+  t.run = !0, this.gamePhase = 2, this.getSpectate(), t.config.playerDisconnectTime = this.dcTime
+}, Tournament.prototype.endGame = function (t)
+{
+  this.winner = this.contenders[0], this.gamePhase = 3, this.timer = this.endTime
+}, Tournament.prototype.endGameTimeout = function (t)
+{
+  t.run = !1, this.gamePhase = 4, this.timer = this.endTime
+}, Tournament.prototype.fillBots = function (t)
+{
+  for (var e = this.maxContenders - this.contenders.length, i = 0; e > i; i++) t.bots.addBot()
+}, Tournament.prototype.getSpectate = function ()
+{
+  var t = Math.floor(Math.random() * this.contenders.length);
+  this.rankOne = this.contenders[t]
+}, Tournament.prototype.prepare = function (t)
+{
+  for (var e = t.nodes.length, i = 0; e > i; i++)
+  {
+    var n = t.nodes[0];
+    n && t.removeNode(n)
+  }
+  t.bots.loadNames(), t.run = !1, this.gamePhase = 0, t.config.tourneyAutoFill > 0 && (this.timer = t.config.tourneyAutoFill, this.autoFill = !0, this.autoFillPlayers = t.config.tourneyAutoFillPlayers), this.dcTime = t.config.playerDisconnectTime, t.config.playerDisconnectTime = 0, t.config.playerMinMassDecay = t.config.playerStartMass, this.prepTime = t.config.tourneyPrepTime, this.endTime = t.config.tourneyEndTime, this.maxContenders = t.config.tourneyMaxPlayers, this.timeLimit = 60 * t.config.tourneyTimeLimit
+}, Tournament.prototype.onPlayerDeath = function (t) {}, Tournament.prototype.formatTime = function (t)
+{
+  if (0 > t) return "0:00";
+  var e = Math.floor(this.timeLimit / 60),
+    i = this.timeLimit % 60;
+  return i = i > 9 ? i : "0" + i.toString(), e + ":" + i
+}, Tournament.prototype.onServerInit = function (t)
+{
+  this.prepare(t)
+}, Tournament.prototype.onPlayerSpawn = function (t, e)
+{
+  0 == this.gamePhase && this.contenders.length < this.maxContenders && (e.color = t.getRandomColor(), this.contenders.push(e), t.spawnPlayer(e), this.contenders.length == this.maxContenders && this.startGamePrep(t))
+}, Tournament.prototype.onCellRemove = function (t)
+{
+  var e = t.owner,
+    i = !1;
+  if (e.cells.length <= 0)
+  {
+    var n = this.contenders.indexOf(e); - 1 != n && ("_socket" in this.contenders[n].socket && (i = !0), this.contenders.splice(n, 1));
+    for (var r = 0, o = 0; o < this.contenders.length; o++) "_socket" in this.contenders[o].socket && r++;
+    (1 == this.contenders.length || 0 == r || 1 == r && i) && 2 == this.gamePhase ? this.endGame(t.owner.gameServer) : this.onPlayerDeath(t.owner.gameServer)
+  }
+}, Tournament.prototype.updateLB = function (t)
+{
+  var e = t.leaderboard;
+  switch (this.gamePhase)
+  {
+  case 0:
+    e[0] = "Waiting for", e[1] = "players: ", e[2] = this.contenders.length + "/" + this.maxContenders, this.autoFill && (this.timer <= 0 ? this.fillBots(t) : this.contenders.length >= this.autoFillPlayers && this.timer--);
+    break;
+  case 1:
+    e[0] = "Game starting in", e[1] = this.timer.toString(), e[2] = "Good luck!", this.timer <= 0 ? this.startGame(t) : this.timer--;
+    break;
+  case 2:
+    e[0] = "Players Remaining", e[1] = this.contenders.length + "/" + this.maxContenders, e[2] = "Time Limit:", e[3] = this.formatTime(this.timeLimit), this.timeLimit < 0 ? this.endGameTimeout(t) : this.timeLimit--;
+    break;
+  case 3:
+    e[0] = "Congratulations", e[1] = this.winner.getName(), e[2] = "for winning!", this.timer <= 0 ? (this.onServerInit(t), t.startingFood()) : (e[3] = "Game restarting in", e[4] = this.timer.toString(), this.timer--);
+    break;
+  case 4:
+    e[0] = "Time Limit", e[1] = "Reached!", this.timer <= 0 ? (this.onServerInit(t), t.startingFood()) : (e[2] = "Game restarting in", e[3] = this.timer.toString(), this.timer--)
+  }
 };
-
-Tournament.prototype.startGame = function(gameServer) {
-    gameServer.run = true;
-    this.gamePhase = 2;
-    this.getSpectate(); // Gets a random person to spectate
-    gameServer.config.playerDisconnectTime = this.dcTime; // Reset config
-};
-
-Tournament.prototype.endGame = function(gameServer) {
-    this.winner = this.contenders[0];
-    this.gamePhase = 3;
-    this.timer = this.endTime; // 30 Seconds
-};
-
-Tournament.prototype.endGameTimeout = function(gameServer) {
-    gameServer.run = false;
-    this.gamePhase = 4;
-    this.timer = this.endTime; // 30 Seconds
-};
-
-Tournament.prototype.fillBots = function(gameServer) {
-    // Fills the server with bots if there arent enough players
-    var fill = this.maxContenders - this.contenders.length;
-    for (var i = 0;i < fill;i++) {
-        gameServer.bots.addBot();
-    }
-};
-
-Tournament.prototype.getSpectate = function() {
-    // Finds a random person to spectate
-    var index = Math.floor(Math.random() * this.contenders.length);
-    this.rankOne = this.contenders[index];
-};
-
-Tournament.prototype.prepare = function(gameServer) {
-    // Remove all cells
-    var len = gameServer.nodes.length;
-    for (var i = 0; i < len; i++) {
-        var node = gameServer.nodes[0];
-
-        if (!node) {
-            continue;
-        }
-
-        gameServer.removeNode(node);
-    }
-
-    gameServer.bots.loadNames();
-
-    // Pauses the server
-    gameServer.run = false;
-    this.gamePhase = 0;
-
-    // Get config values
-    if (gameServer.config.tourneyAutoFill > 0) {
-        this.timer = gameServer.config.tourneyAutoFill;
-        this.autoFill = true;
-        this.autoFillPlayers = gameServer.config.tourneyAutoFillPlayers;
-    }
-    // Handles disconnections
-    this.dcTime = gameServer.config.playerDisconnectTime;
-    gameServer.config.playerDisconnectTime = 0;
-    gameServer.config.playerMinMassDecay = gameServer.config.playerStartMass;
-
-    this.prepTime = gameServer.config.tourneyPrepTime;
-    this.endTime = gameServer.config.tourneyEndTime;
-    this.maxContenders = gameServer.config.tourneyMaxPlayers;
-
-    // Time limit
-    this.timeLimit = gameServer.config.tourneyTimeLimit * 60; // in seconds
-};
-
-Tournament.prototype.onPlayerDeath = function(gameServer) {
-    // Nothing
-}
-
-Tournament.prototype.formatTime = function(time) {
-    if (time < 0) {
-        return "0:00";
-    }
-    // Format
-    var min = Math.floor(this.timeLimit/60);
-    var sec = this.timeLimit%60;
-    sec = (sec > 9) ? sec : "0" + sec.toString() ; 
-    return min+":"+sec;
-}
-
-// Override
-
-Tournament.prototype.onServerInit = function(gameServer) {
-    this.prepare(gameServer);
-};
-
-Tournament.prototype.onPlayerSpawn = function(gameServer,player) {
-    // Only spawn players if the game hasnt started yet
-    if ((this.gamePhase == 0) && (this.contenders.length < this.maxContenders)) {
-        player.color = gameServer.getRandomColor(); // Random color
-        this.contenders.push(player); // Add to contenders list
-        gameServer.spawnPlayer(player);
-
-        if (this.contenders.length == this.maxContenders) {
-            // Start the game once there is enough players
-            this.startGamePrep(gameServer);
-        }
-    }
-};
-
-Tournament.prototype.onCellRemove = function(cell) {
-    var owner = cell.owner,
-        human_just_died = false;
-
-    if (owner.cells.length <= 0) {
-        // Remove from contenders list
-        var index = this.contenders.indexOf(owner);
-        if (index != -1) {
-            if ('_socket' in this.contenders[index].socket) {
-                human_just_died = true;
-            }
-            this.contenders.splice(index,1);
-        }
-
-        // Victory conditions
-        var humans = 0;
-        for (var i = 0; i < this.contenders.length; i++) {
-            if ('_socket' in this.contenders[i].socket) {
-                humans++;
-            }
-        }
-
-        // the game is over if:
-        // 1) there is only 1 player left, OR
-        // 2) all the humans are dead, OR
-        // 3) the last-but-one human just died
-        if ((this.contenders.length == 1 || humans == 0 || (humans == 1 && human_just_died)) && this.gamePhase == 2) {
-            this.endGame(cell.owner.gameServer);
-        } else {
-            // Do stuff
-            this.onPlayerDeath(cell.owner.gameServer);
-        }
-    }
-};
-
-Tournament.prototype.updateLB = function(gameServer) {
-    var lb = gameServer.leaderboard;
-
-    switch (this.gamePhase) {
-        case 0:
-            lb[0] = "Waiting for";
-            lb[1] = "players: ";
-            lb[2] = this.contenders.length+"/"+this.maxContenders;
-            if (this.autoFill) {
-                if (this.timer <= 0) {
-                    this.fillBots(gameServer);
-                } else if (this.contenders.length >= this.autoFillPlayers) {
-                    this.timer--;
-                }
-            }
-            break;
-        case 1:
-            lb[0] = "Game starting in";
-            lb[1] = this.timer.toString();
-            lb[2] = "Good luck!";
-            if (this.timer <= 0) {
-                // Reset the game
-                this.startGame(gameServer);
-            } else {
-                this.timer--;
-            }
-            break;
-        case 2:
-            lb[0] = "Players Remaining";
-            lb[1] = this.contenders.length+"/"+this.maxContenders;
-            lb[2] = "Time Limit:";
-            lb[3] = this.formatTime(this.timeLimit);
-            if (this.timeLimit < 0) {
-                // Timed out
-                this.endGameTimeout(gameServer);
-            } else {
-                this.timeLimit--;
-            }
-            break;
-        case 3:
-            lb[0] = "Congratulations";
-            lb[1] = this.winner.getName();
-            lb[2] = "for winning!";
-            if (this.timer <= 0) {
-                // Reset the game
-                this.onServerInit(gameServer);
-                // Respawn starting food
-                gameServer.startingFood();
-            } else {
-                lb[3] = "Game restarting in";
-                lb[4] = this.timer.toString();
-                this.timer--;
-            }
-            break;
-        case 4:
-            lb[0] = "Time Limit"; 
-            lb[1] = "Reached!";
-            if (this.timer <= 0) {
-                // Reset the game
-                this.onServerInit(gameServer);
-                // Respawn starting food
-                gameServer.startingFood();
-            } else {
-                lb[2] = "Game restarting in";
-                lb[3] = this.timer.toString();
-                this.timer--;
-            }
-        default:
-            break;
-    }
-};
-
