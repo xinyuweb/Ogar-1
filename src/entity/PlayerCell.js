@@ -3,26 +3,30 @@ function PlayerCell()
   Cell.apply(this, Array.prototype.slice.call(arguments)), this.cellType = 0, this.recombineTicks = 0, this.ignoreCollision = !1
 }
 var Cell = require("./Cell");
-module.exports = PlayerCell, PlayerCell.prototype = new Cell, PlayerCell.prototype.visibleCheck = function (e, t)
+module.exports = PlayerCell, PlayerCell.prototype = new Cell, PlayerCell.prototype.visibleCheck = function (t, e)
 {
-  if (this.mass < 100) return this.collisionCheck(e.bottomY, e.topY, e.rightX, e.leftX);
+  if (this.mass < 100) return this.collisionCheck(t.bottomY, t.topY, t.rightX, t.leftX);
   var i = this.getSize(),
-    o = i + e.width >> 0,
-    s = i + e.height >> 0;
-  return this.abs(this.position.x - t.x) < o && this.abs(this.position.y - t.y) < s
-}, PlayerCell.prototype.calcMergeTime = function (e)
+    o = i + t.width >> 0,
+    s = i + t.height >> 0;
+  return this.abs(this.position.x - e.x) < o && this.abs(this.position.y - e.y) < s
+}, PlayerCell.prototype.simpleCollide = function (t, e)
 {
-  this.recombineTicks = e + (.02 * this.mass >> 0)
-}, PlayerCell.prototype.calcMove = function (e, t, i)
+  var i = 2 * e >> 0;
+  return this.abs(this.position.x - t.x) < i && this.abs(this.position.y - t.y) < i
+}, PlayerCell.prototype.calcMergeTime = function (t)
+{
+  this.recombineTicks = t + (.02 * this.mass >> 0)
+}, PlayerCell.prototype.calcMove = function (t, e, i)
 {
   var o = i.config,
     s = this.getSize(),
-    l = t - this.position.y,
-    r = e - this.position.x,
+    l = e - this.position.y,
+    r = t - this.position.x,
     n = Math.atan2(r, l);
   if (!isNaN(n))
   {
-    for (var h = this.getDist(this.position.x, this.position.y, e, t), a = Math.min(this.getSpeed(), h), p = this.position.x + a * Math.sin(n), y = this.position.y + a * Math.cos(n), c = 0; c < this.owner.cells.length; c++)
+    for (var h = this.getDist(this.position.x, this.position.y, t, e), a = Math.min(this.getSpeed(), h), p = this.position.x + a * Math.sin(n), y = this.position.y + a * Math.cos(n), c = 0; c < this.owner.cells.length; c++)
     {
       var d = this.owner.cells[c];
       if (this.nodeId != d.nodeId && !this.ignoreCollision && (d.recombineTicks > 0 || this.recombineTicks > 0))
@@ -32,9 +36,9 @@ module.exports = PlayerCell, PlayerCell.prototype = new Cell, PlayerCell.prototy
         {
           var g = y - d.position.y,
             f = p - d.position.x,
-            m = Math.atan2(f, g),
-            u = C - h;
-          p = p + u * Math.sin(m) >> 0, y = y + u * Math.cos(m) >> 0
+            u = Math.atan2(f, g),
+            m = C - h;
+          p = p + m * Math.sin(u) >> 0, y = y + m * Math.cos(u) >> 0
         }
       }
     }
@@ -43,26 +47,26 @@ module.exports = PlayerCell, PlayerCell.prototype = new Cell, PlayerCell.prototy
 }, PlayerCell.prototype.getEatingRange = function ()
 {
   return .4 * this.getSize()
-}, PlayerCell.prototype.onConsume = function (e, t)
+}, PlayerCell.prototype.onConsume = function (t, e)
 {
-  e.addMass(this.mass)
-}, PlayerCell.prototype.onAdd = function (e)
+  t.addMass(this.mass)
+}, PlayerCell.prototype.onAdd = function (t)
 {
-  e.nodesPlayer.push(this), e.gameMode.onCellAdd(this)
-}, PlayerCell.prototype.onRemove = function (e)
+  t.nodesPlayer.push(this), t.gameMode.onCellAdd(this)
+}, PlayerCell.prototype.onRemove = function (t)
 {
-  var t;
-  t = this.owner.cells.indexOf(this), -1 != t && this.owner.cells.splice(t, 1), t = e.nodesPlayer.indexOf(this), -1 != t && e.nodesPlayer.splice(t, 1), e.gameMode.onCellRemove(this)
-}, PlayerCell.prototype.moveDone = function (e)
+  var e;
+  e = this.owner.cells.indexOf(this), -1 != e && this.owner.cells.splice(e, 1), e = t.nodesPlayer.indexOf(this), -1 != e && t.nodesPlayer.splice(e, 1), t.gameMode.onCellRemove(this)
+}, PlayerCell.prototype.moveDone = function (t)
 {
   this.ignoreCollision = !1
-}, PlayerCell.prototype.abs = function (e)
+}, PlayerCell.prototype.abs = function (t)
 {
-  return 0 > e ? -e : e
-}, PlayerCell.prototype.getDist = function (e, t, i, o)
+  return 0 > t ? -t : t
+}, PlayerCell.prototype.getDist = function (t, e, i, o)
 {
-  var s = i - e;
+  var s = i - t;
   s *= s;
-  var l = o - t;
+  var l = o - e;
   return l *= l, Math.sqrt(s + l)
 };
