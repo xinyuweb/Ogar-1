@@ -19,7 +19,7 @@ function GameServer()
     foodStartAmount: 100,
     foodMaxAmount: 500,
     foodMass: 1,
-    foodMassGrow: 1,
+    foodMassGrow: 0,
     foodMassGrowPossiblity: 50,
     foodMassLimit: 5,
     foodMassTimeout: 120,
