@@ -1,0 +1,8 @@
+- [x] [Border update](https://github.com/OgarProject/Ogar/pull/323)
+- [x] [Added 22 more skins. {Tested}](https://github.com/OgarProject/Ogar/pull/324)
+- [x] [Added eject mass cooldown](https://github.com/OgarProject/Ogar/pull/326)
+- [x] [Fix for the startTime](https://github.com/OgarProject/Ogar/pull/332)
+- [x] [feature: add the ability for food to grow like agar.io](https://github.com/OgarProject/Ogar/pull/333)
+- [x] [Improvements to AI code](https://github.com/OgarProject/Ogar/pull/346)
+- [x] [bug fixes for food mass grow feature](https://github.com/OgarProject/Ogar/pull/350)
+- [x] [Fixed bug (food grow feature) in Experimental Teams](https://github.com/OgarProject/Ogar/pull/353)
