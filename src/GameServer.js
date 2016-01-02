@@ -19,16 +19,11 @@ function GameServer()
     foodStartAmount: 100,
     foodMaxAmount: 500,
     foodMass: 1,
-    foodMassGrow: 1,
-    foodMassGrowPossiblity: 50,
-    foodMassLimit: 5,
-    foodMassTimeout: 120,
     virusMinAmount: 10,
     virusMaxAmount: 50,
     virusStartMass: 100,
     virusFeedAmount: 7,
     ejectMass: 12,
-    ejectMassCooldown: 200,
     ejectMassLoss: 16,
     ejectSpeed: 160,
     ejectSpawnPlayer: 50,
@@ -195,7 +190,7 @@ module.exports = GameServer, GameServer.prototype.start = function ()
   for (var e = Math.min(this.config.foodSpawnAmount, this.config.foodMaxAmount - this.currentFood), t = 0; e > t; t++) this.spawnFood()
 }, GameServer.prototype.spawnFood = function ()
 {
-  var e = new Entity.Food(this.getNextNodeId(), null, this.getRandomPosition(), this.config.foodMass, this);
+  var e = new Entity.Food(this.getNextNodeId(), null, this.getRandomPosition(), this.config.foodMass);
   e.setColor(this.getRandomColor()), this.addNode(e), this.currentFood++
 }, GameServer.prototype.spawnPlayer = function (e, t, o)
 {
@@ -247,26 +242,26 @@ module.exports = GameServer, GameServer.prototype.start = function ()
     var a = this.nodesPlayer[t[o]];
     if (a)
     {
-      var c = a.owner;
-      a.calcMove(c.mouse.x, c.mouse.y, this);
-      for (var l = this.getCellsInRange(a), i = 0; i < l.length; i++)
+      var l = a.owner;
+      a.calcMove(l.mouse.x, l.mouse.y, this);
+      for (var h = this.getCellsInRange(a), i = 0; i < h.length; i++)
       {
-        var h = l[i];
-        0 == h.cellType && (e--, h.nodeId < a.nodeId && o--), h.onConsume(a, this), h.setKiller(a), this.removeNode(h)
+        var c = h[i];
+        0 == c.cellType && (e--, c.nodeId < a.nodeId && o--), c.onConsume(a, this), c.setKiller(a), this.removeNode(c)
       }
     }
   }
   e = this.movingNodes.length;
   for (var o = 0; e > o; o++)
   {
-    for (var h = this.movingNodes[o];
-      "undefined" == typeof h && o < this.movingNodes.length;) this.movingNodes.splice(o, 1), h = this.movingNodes[o];
+    for (var c = this.movingNodes[o];
+      "undefined" == typeof c && o < this.movingNodes.length;) this.movingNodes.splice(o, 1), c = this.movingNodes[o];
     if (!(o >= this.movingNodes.length))
-      if (h.moveEngineTicks > 0) h.onAutoMove(this), h.calcMovePhys(this.config);
+      if (c.moveEngineTicks > 0) c.onAutoMove(this), c.calcMovePhys(this.config);
       else
       {
-        h.moveDone(this);
-        var d = this.movingNodes.indexOf(h); - 1 != d && this.movingNodes.splice(d, 1)
+        c.moveDone(this);
+        var d = this.movingNodes.indexOf(c); - 1 != d && this.movingNodes.splice(d, 1)
       }
   }
 }, GameServer.prototype.setAsMovingNode = function (e)
@@ -284,41 +279,37 @@ module.exports = GameServer, GameServer.prototype.start = function ()
           r = e.mouse.x - i.position.x,
           n = Math.atan2(r, s),
           a = i.getSize() / 2,
-          c = {
+          l = {
             x: i.position.x + a * Math.sin(n),
             y: i.position.y + a * Math.cos(n)
           },
-          l = 6 * i.getSpeed(),
-          h = i.mass / 2;
-        i.mass = h;
-        var d = new Entity.PlayerCell(this.getNextNodeId(), e, c, h);
-        d.setAngle(n), d.setMoveEngineData(l, 32, .85), d.calcMergeTime(this.config.playerRecombineTime), this.setAsMovingNode(d), this.addNode(d)
+          h = 6 * i.getSpeed(),
+          c = i.mass / 2;
+        i.mass = c;
+        var d = new Entity.PlayerCell(this.getNextNodeId(), e, l, c);
+        d.setAngle(n), d.setMoveEngineData(h, 32, .85), d.calcMergeTime(this.config.playerRecombineTime), this.setAsMovingNode(d), this.addNode(d)
       }
     }
-}, GameServer.prototype.canEjectMass = function (e)
-{
-  return "undefined" == typeof e.lastEject || this.time - e.lastEject >= this.config.ejectMassCooldown ? (e.lastEject = this.time, !0) : !1
 }, GameServer.prototype.ejectMass = function (e)
 {
-  if (this.canEjectMass(e))
-    for (var t = 0; t < e.cells.length; t++)
+  for (var t = 0; t < e.cells.length; t++)
+  {
+    var o = e.cells[t];
+    if (o && !(o.mass < this.config.playerMinMassEject))
     {
-      var o = e.cells[t];
-      if (o && !(o.mass < this.config.playerMinMassEject))
-      {
-        var i = e.mouse.y - o.position.y,
-          s = e.mouse.x - o.position.x,
-          r = Math.atan2(s, i),
-          n = o.getSize() + 5,
-          a = {
-            x: o.position.x + (n + this.config.ejectMass) * Math.sin(r),
-            y: o.position.y + (n + this.config.ejectMass) * Math.cos(r)
-          };
-        o.mass -= this.config.ejectMassLoss, r += .4 * Math.random() - .2;
-        var c = new Entity.EjectedMass(this.getNextNodeId(), null, a, this.config.ejectMass);
-        c.setAngle(r), c.setMoveEngineData(this.config.ejectSpeed, 20), c.setColor(o.getColor()), this.addNode(c), this.setAsMovingNode(c)
-      }
+      var i = e.mouse.y - o.position.y,
+        s = e.mouse.x - o.position.x,
+        r = Math.atan2(s, i),
+        n = o.getSize() + 5,
+        a = {
+          x: o.position.x + (n + this.config.ejectMass) * Math.sin(r),
+          y: o.position.y + (n + this.config.ejectMass) * Math.cos(r)
+        };
+      o.mass -= this.config.ejectMassLoss, r += .4 * Math.random() - .2;
+      var l = new Entity.EjectedMass(this.getNextNodeId(), null, a, this.config.ejectMass);
+      l.setAngle(r), l.setMoveEngineData(this.config.ejectSpeed, 20), l.setColor(o.getColor()), this.addNode(l), this.setAsMovingNode(l)
     }
+  }
 }, GameServer.prototype.newCellVirused = function (e, t, o, i, s)
 {
   var r = {
@@ -365,22 +356,22 @@ module.exports = GameServer, GameServer.prototype.start = function ()
       if (!(r.mass * n > e.mass))
       {
         var a = Math.pow(r.position.x - e.position.x, 2),
-          c = Math.pow(r.position.y - e.position.y, 2),
-          l = Math.sqrt(a + c),
-          h = e.getSize() - r.getEatingRange();
-        l > h || (t.push(r), r.inRange = !0)
+          l = Math.pow(r.position.y - e.position.y, 2),
+          h = Math.sqrt(a + l),
+          c = e.getSize() - r.getEatingRange();
+        h > c || (t.push(r), r.inRange = !0)
       }
     }
   }
   return t
 }, GameServer.prototype.getNearestVirus = function (e)
 {
-  for (var t = null, o = 100, i = e.position.y - o, s = e.position.y + o, r = e.position.x - o, n = e.position.x + o, a = this.nodesVirus.length, c = 0; a > c; c++)
+  for (var t = null, o = 100, i = e.position.y - o, s = e.position.y + o, r = e.position.x - o, n = e.position.x + o, a = this.nodesVirus.length, l = 0; a > l; l++)
   {
-    var l = this.nodesVirus[c];
-    if ("undefined" != typeof l && l.collisionCheck(s, i, n, r))
+    var h = this.nodesVirus[l];
+    if ("undefined" != typeof h && h.collisionCheck(s, i, n, r))
     {
-      t = l;
+      t = h;
       break
     }
   }
