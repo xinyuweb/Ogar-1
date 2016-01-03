@@ -287,9 +287,7 @@ module.exports = GameServer, GameServer.prototype.start = function ()
           c = i.mass / 2;
         i.mass = c;
         var d = new Entity.PlayerCell(this.getNextNodeId(), e, l, c);
-        d.setAngle(n);
-        var p = -3.61 + 13.6 * Math.log(i.mass);
-        i.setMoveEngineData(0, 18, 1), i.mass < 200 ? d.setMoveEngineData(h - 5, 20, .91) : i.mass < 500 && i.mass > 201 ? d.setMoveEngineData(p - 2, 18, .9) : i.mass < 4e3 && i.mass > 2e3 ? d.setMoveEngineData(p - 15, 18, .9) : d.setMoveEngineData(p - 27, 18, .9), d.calcMergeTime(this.config.playerRecombineTime), d.ignoreCollision = !0, i.ignoreCollision = !0, this.setAsMovingNode(i), this.setAsMovingNode(d), this.addNode(d)
+        d.setAngle(n), d.setMoveEngineData(h, 32, .85), d.calcMergeTime(this.config.playerRecombineTime), this.setAsMovingNode(d), this.addNode(d)
       }
     }
 }, GameServer.prototype.ejectMass = function (e)
