@@ -1,53 +1,111 @@
-function UpdateNodes(e, t, s)
-{
-  this.destroyQueue = e, this.nodes = t, this.nonVisibleNodes = s
+function UpdateNodes(destroyQueue, nodes, nonVisibleNodes, scrambleX, scrambleY) {
+    this.destroyQueue = destroyQueue;
+    this.nodes = nodes;
+    this.nonVisibleNodes = nonVisibleNodes;
+    this.scrambleX = scrambleX;
+    this.scrambleY = scrambleY;
 }
-module.exports = UpdateNodes, UpdateNodes.prototype.build = function ()
-{
-  for (var e = 0, t = 0; t < this.nodes.length; t++)
-  {
-    var s = this.nodes[t];
-    "undefined" != typeof s && (e = e + 20 + 2 * s.getName().length)
-  }
-  var n = new ArrayBuffer(3 + 12 * this.destroyQueue.length + 4 * this.nonVisibleNodes.length + e + 8),
-    i = new DataView(n);
-  i.setUint8(0, 16, !0), i.setUint16(1, this.destroyQueue.length, !0);
-  for (var o = 3, t = 0; t < this.destroyQueue.length; t++)
-  {
-    var s = this.destroyQueue[t];
-    if (s)
-    {
-      var r = 0;
-      s.getKiller() && (r = s.getKiller().nodeId), i.setUint32(o, r, !0), i.setUint32(o + 4, s.nodeId, !0), o += 8
-    }
-  }
-  for (var t = 0; t < this.nodes.length; t++)
-  {
-    var s = this.nodes[t];
-    if ("undefined" != typeof s)
-    {
-      i.setUint32(o, s.nodeId, !0), i.setInt32(o + 4, s.position.x, !0), i.setInt32(o + 8, s.position.y, !0), i.setUint16(o + 12, s.getSize(), !0), i.setUint8(o + 14, s.color.r, !0), i.setUint8(o + 15, s.color.g, !0), i.setUint8(o + 16, s.color.b, !0), i.setUint8(o + 17, s.spiked, !0), o += 18;
-      var d = s.getName();
-      if (d)
-        for (var h = 0; h < d.length; h++)
-        {
-          var l = d.charCodeAt(h);
-          l && i.setUint16(o, l, !0), o += 2
+
+module.exports = UpdateNodes;
+
+UpdateNodes.prototype.build = function() {
+    // Calculate nodes sub packet size before making the data view
+    var nodesLength = 0;
+    for (var i = 0; i < this.nodes.length; i++) {
+        var node = this.nodes[i];
+
+        if (typeof node == "undefined") {
+            continue;
         }
-      i.setUint16(o, 0, !0), o += 2
+
+        nodesLength = nodesLength + 20 + (node.getName().length * 2);
     }
-  }
-  var a = this.nonVisibleNodes.length + this.destroyQueue.length;
-  i.setUint32(o, 0, !0), i.setUint32(o + 4, a, !0), o += 8;
-  for (var t = 0; t < this.destroyQueue.length; t++)
-  {
-    var s = this.destroyQueue[t];
-    s && (i.setUint32(o, s.nodeId, !0), o += 4)
-  }
-  for (var t = 0; t < this.nonVisibleNodes.length; t++)
-  {
-    var s = this.nonVisibleNodes[t];
-    s && (i.setUint32(o, s.nodeId, !0), o += 4)
-  }
-  return n
+
+    var buf = new ArrayBuffer(3 + (this.destroyQueue.length * 12) + (this.nonVisibleNodes.length * 4) + nodesLength + 8);
+    var view = new DataView(buf);
+
+    view.setUint8(0, 16, true); // Packet ID
+    view.setUint16(1, this.destroyQueue.length, true); // Nodes to be destroyed
+
+    var offset = 3;
+    for (var i = 0; i < this.destroyQueue.length; i++) {
+        var node = this.destroyQueue[i];
+
+        if (!node) {
+            continue;
+        }
+
+        var killer = 0;
+        if (node.getKiller()) {
+            killer = node.getKiller().nodeId;
+        }
+
+        view.setUint32(offset, killer, true); // Killer ID
+        view.setUint32(offset + 4, node.nodeId, true); // Node ID
+
+        offset += 8;
+    }
+
+    for (var i = 0; i < this.nodes.length; i++) {
+        var node = this.nodes[i];
+
+        if (typeof node == "undefined") {
+            continue;
+        }
+
+        view.setUint32(offset, node.nodeId, true); // Node ID
+        view.setInt32(offset + 4, node.position.x + this.scrambleX, true); // X position
+        view.setInt32(offset + 8, node.position.y + this.scrambleY, true); // Y position
+        view.setUint16(offset + 12, node.getSize(), true); // Mass formula: Radius (size) = (mass * mass) / 100
+        view.setUint8(offset + 14, node.color.r, true); // Color (R)
+        view.setUint8(offset + 15, node.color.g, true); // Color (G)
+        view.setUint8(offset + 16, node.color.b, true); // Color (B)
+        view.setUint8(offset + 17, node.spiked, true); // Flags
+        offset += 18;
+
+        var name = node.getName();
+        if (name) {
+            for (var j = 0; j < name.length; j++) {
+                var c = name.charCodeAt(j);
+                if (c){
+                    view.setUint16(offset, c, true);
+                }
+                offset += 2;
+            }
+        }
+
+        view.setUint16(offset, 0, true); // End of string
+        offset += 2;
+    }
+
+    var len = this.nonVisibleNodes.length + this.destroyQueue.length;
+    view.setUint32(offset, 0, true); // End
+    view.setUint32(offset + 4, len, true); // # of non-visible nodes to destroy
+
+    offset += 8;
+
+    // Destroy queue + nonvisible nodes
+    for (var i = 0; i < this.destroyQueue.length; i++) {
+        var node = this.destroyQueue[i];
+
+        if (!node) {
+            continue;
+        }
+
+        view.setUint32(offset, node.nodeId, true);
+        offset += 4;
+    }
+    for (var i = 0; i < this.nonVisibleNodes.length; i++) {
+        var node = this.nonVisibleNodes[i];
+
+        if (!node) {
+            continue;
+        }
+
+        view.setUint32(offset, node.nodeId, true);
+        offset += 4;
+    }
+
+    return buf;
 };
+

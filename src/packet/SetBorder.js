@@ -1,10 +1,22 @@
-function SetBorder(t, e, o, r)
-{
-  this.left = t, this.right = e, this.top = o, this.bottom = r
+function SetBorder(left, right, top, bottom) {
+    this.left = left;
+    this.right = right;
+    this.top = top;
+    this.bottom = bottom;
 }
-module.exports = SetBorder, SetBorder.prototype.build = function ()
-{
-  var t = new ArrayBuffer(33),
-    e = new DataView(t);
-  return e.setUint8(0, 64, !0), e.setFloat64(1, this.left, !0), e.setFloat64(9, this.top, !0), e.setFloat64(17, this.right, !0), e.setFloat64(25, this.bottom, !0), t
+
+module.exports = SetBorder;
+
+SetBorder.prototype.build = function() {
+    var buf = new ArrayBuffer(33);
+    var view = new DataView(buf);
+
+    view.setUint8(0, 64, true);
+    view.setFloat64(1, this.left, true);
+    view.setFloat64(9, this.top, true);
+    view.setFloat64(17, this.right, true);
+    view.setFloat64(25, this.bottom, true);
+
+    return buf;
 };
+
