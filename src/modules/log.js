@@ -22,13 +22,13 @@ module.exports = Log, Log.prototype.setup = function(o) {
    };
   case 0:
    process.on("uncaughtException", function(o) {
-    console.log(o.stack);
-   });
+    console.log(o.stack)
+   })
  }
 }, Log.prototype.onConnect = function(o) {}, Log.prototype.onDisconnect = function(o) {}, Log.prototype.onCommand = function(o) {}, Log.prototype.formatTime = function() {
  var o = new Date,
   t = o.getHours();
  t = (10 > t ? "0" : "") + t;
  var e = o.getMinutes();
- return e = (10 > e ? "0" : "") + e, t + ":" + e;
+ return e = (10 > e ? "0" : "") + e, t + ":" + e
 };

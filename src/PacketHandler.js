@@ -1,11 +1,11 @@
 function PacketHandler(e, t) {
- this.gameServer = e, this.socket = t, this.protocol = 0, this.pressQ = !1, this.pressW = !1, this.pressSpace = !1;
+ this.gameServer = e, this.socket = t, this.protocol = 0, this.pressQ = !1, this.pressW = !1, this.pressSpace = !1
 }
 var Packet = require("./packet");
 module.exports = PacketHandler, PacketHandler.prototype.handleMessage = function(e) {
  function t(e) {
   for (var t = e.length, r = new ArrayBuffer(t), a = new Uint8Array(r), s = 0; t > s; s++) a[s] = e[s];
-  return a.buffer;
+  return a.buffer
  }
  if (0 != e.length) {
   var r = t(e),
@@ -17,7 +17,7 @@ module.exports = PacketHandler, PacketHandler.prototype.handleMessage = function
     for (var c = "", i = 2 * this.gameServer.config.playerMaxNickLength, o = 1; o < a.byteLength && i >= o; o += 2) {
      var n = a.getUint16(o, !0);
      if (0 == n) break;
-     c += String.fromCharCode(n);
+     c += String.fromCharCode(n)
     }
     this.setNickname(c);
     break;
@@ -27,7 +27,7 @@ module.exports = PacketHandler, PacketHandler.prototype.handleMessage = function
    case 16:
     if (13 == a.byteLength) {
      var h = this.socket.playerTracker;
-     h.mouse.x = a.getInt32(1, !0), h.mouse.y = a.getInt32(5, !0);
+     h.mouse.x = a.getInt32(1, !0), h.mouse.y = a.getInt32(5, !0)
     }
     break;
    case 17:
@@ -45,11 +45,11 @@ module.exports = PacketHandler, PacketHandler.prototype.handleMessage = function
     if (5 == a.byteLength) {
      this.protocol = a.getUint32(1, !0);
      var k = this.gameServer.config;
-     this.socket.sendPacket(new Packet.SetBorder(k.borderLeft, k.borderRight, k.borderTop, k.borderBottom));
+     this.socket.sendPacket(new Packet.SetBorder(k.borderLeft, k.borderRight, k.borderTop, k.borderBottom))
     }
   }
  }
 }, PacketHandler.prototype.setNickname = function(e) {
  var t = this.socket.playerTracker;
- t.cells.length < 1 && (t.setName(e), this.gameServer.gameMode.onPlayerSpawn(this.gameServer, t), t.spectate = !1);
+ t.cells.length < 1 && (t.setName(e), this.gameServer.gameMode.onPlayerSpawn(this.gameServer, t), t.spectate = !1)
 };

@@ -111,20 +111,20 @@ function Rainbow() {
   r: 227,
   g: 0,
   b: 64
- }], this.colorsLength = this.colors.length - 1, this.speed = 1;
+ }], this.colorsLength = this.colors.length - 1, this.speed = 1
 }
 var FFA = require("./FFA"),
  Food = require("../entity/Food"),
  FoodUp = require("../entity/Food").prototype.sendUpdate;
 module.exports = Rainbow, Rainbow.prototype = new FFA, Rainbow.prototype.changeColor = function(o) {
- "undefined" == typeof o.rainbow && (o.rainbow = Math.floor(Math.random() * this.colors.length)), o.rainbow >= this.colorsLength && (o.rainbow = 0), o.color = this.colors[o.rainbow], o.rainbow += this.speed;
+ "undefined" == typeof o.rainbow && (o.rainbow = Math.floor(Math.random() * this.colors.length)), o.rainbow >= this.colorsLength && (o.rainbow = 0), o.color = this.colors[o.rainbow], o.rainbow += this.speed
 }, Rainbow.prototype.onServerInit = function() {
  Food.prototype.sendUpdate = function() {
-  return !0;
- };
+  return !0
+ }
 }, Rainbow.prototype.onChange = function() {
- Food.prototype.sendUpdate = FoodUp;
+ Food.prototype.sendUpdate = FoodUp
 }, Rainbow.prototype.onTick = function(o) {
  var r;
- for (var t in o.nodes) r = o.nodes[t], r && this.changeColor(r);
+ for (var t in o.nodes) r = o.nodes[t], r && this.changeColor(r)
 };

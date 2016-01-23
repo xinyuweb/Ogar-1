@@ -42,8 +42,8 @@ var get = function(e) {
    r = new module.exports.Debug;
    break;
   default:
-   r = new module.exports.FFA;
+   r = new module.exports.FFA
  }
- return r;
+ return r
 };
 module.exports.get = get;

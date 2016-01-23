@@ -9,8 +9,8 @@ function encode(e, t) {
  return Object.keys(e).forEach(function(t, i, o) {
   var c = e[t];
   c && Array.isArray(c) ? c.forEach(function(e) {
-   n += safe(t + "[]") + a + safe(e) + "\n";
-  }) : c && "object" == typeof c ? r.push(t) : n += safe(t) + a + safe(c) + eol;
+   n += safe(t + "[]") + a + safe(e) + "\n"
+  }) : c && "object" == typeof c ? r.push(t) : n += safe(t) + a + safe(c) + eol
  }), t.section && n.length && (n = "[" + safe(t.section) + "]" + eol + n), r.forEach(function(r, a, i) {
   var o = dotSplit(r).join("\\."),
    c = (t.section ? t.section + "." : "") + o,
@@ -18,14 +18,14 @@ function encode(e, t) {
     section: c,
     whitespace: t.whitespace
    });
-  n.length && s.length && (n += eol), n += s;
- }), n;
+  n.length && s.length && (n += eol), n += s
+ }), n
 }
 
 function dotSplit(e) {
  return e.replace(/\1/g, "LITERAL\\1LITERAL").replace(/\\\./g, "").split(/\./).map(function(e) {
-  return e.replace(/\1/g, "\\.").replace(/\2LITERAL\\1LITERAL\2/g, "");
- });
+  return e.replace(/\1/g, "\\.").replace(/\2LITERAL\\1LITERAL\2/g, "")
+ })
 }
 
 function decode(e) {
@@ -41,7 +41,7 @@ function decode(e) {
     if (void 0 !== c[1]) return i = unsafe(c[1]), void(r = t[i] = t[i] || {});
     var s = unsafe(c[2]),
      f = c[3] ? unsafe(c[4] || "") : !0;
-    s.length > 2 && "[]" === s.slice(-2) && (s = s.substring(0, s.length - 2), r[s] ? Array.isArray(r[s]) || (r[s] = [r[s]]) : r[s] = []), isInt(f) ? r[s] = parseInt(f) : r[s] = parseFloat(f);
+    s.length > 2 && "[]" === s.slice(-2) && (s = s.substring(0, s.length - 2), r[s] ? Array.isArray(r[s]) || (r[s] = [r[s]]) : r[s] = []), isInt(f) ? r[s] = parseInt(f) : r[s] = parseFloat(f)
    }
   }
  }), Object.keys(t).filter(function(e, r, n) {
@@ -51,19 +51,19 @@ function decode(e) {
    o = a.pop(),
    c = o.replace(/\\\./g, ".");
   return a.forEach(function(e, t, r) {
-   i[e] && "object" == typeof i[e] || (i[e] = {}), i = i[e];
-  }), i === t && c === o ? !1 : (i[c] = t[e], !0);
+   i[e] && "object" == typeof i[e] || (i[e] = {}), i = i[e]
+  }), i === t && c === o ? !1 : (i[c] = t[e], !0)
  }).forEach(function(e, r, n) {
-  delete t[e];
- }), t;
+  delete t[e]
+ }), t
 }
 
 function isQuoted(e) {
- return '"' === e.charAt(0) && '"' === e.slice(-1) || "'" === e.charAt(0) && "'" === e.slice(-1);
+ return '"' === e.charAt(0) && '"' === e.slice(-1) || "'" === e.charAt(0) && "'" === e.slice(-1)
 }
 
 function safe(e) {
- return "string" != typeof e || e.match(/[=\r\n]/) || e.match(/^\[/) || e.length > 1 && isQuoted(e) || e !== e.trim() ? JSON.stringify(e) : e.replace(/;/g, "\\;").replace(/#/g, "\\#");
+ return "string" != typeof e || e.match(/[=\r\n]/) || e.match(/^\[/) || e.length > 1 && isQuoted(e) || e !== e.trim() ? JSON.stringify(e) : e.replace(/;/g, "\\;").replace(/#/g, "\\#")
 }
 
 function unsafe(e, t) {
@@ -73,19 +73,19 @@ function unsafe(e, t) {
    if (r) n += -1 !== "\\;#".indexOf(o) ? o : "\\" + o, r = !1;
    else {
     if (-1 !== ";#".indexOf(o)) break;
-    "\\" === o ? r = !0 : n += o;
+    "\\" === o ? r = !0 : n += o
    }
   }
-  return r && (n += "\\"), n;
+  return r && (n += "\\"), n
  }
  "'" === e.charAt(0) && (e = e.substr(1, e.length - 2));
  try {
-  e = JSON.parse(e);
+  e = JSON.parse(e)
  } catch (c) {}
- return e;
+ return e
 }
 exports.parse = exports.decode = decode, exports.stringify = exports.encode = encode, exports.safe = safe, exports.unsafe = unsafe;
 var eol = "win32" === process.platform ? "\r\n" : "\n",
  isInt = function(e) {
-  return parseInt(e) === e;
+  return parseInt(e) === e
  };
